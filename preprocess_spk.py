@@ -41,8 +41,8 @@ def preprocess(in_dir, out_dir_root, spk, weights_fpath, num_workers):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--in_dir', type=str, 
-        default='dataset/vctk-16k/')
-    parser.add_argument('--num_workers', type=int, default=12)
+        default='dataset/cmu_artic_16k/cmu_artic_ar_test')
+    parser.add_argument('--num_workers', type=int, default=2)
     parser.add_argument('--out_dir_root', type=str, 
         default='dataset')
     parser.add_argument('--spk_encoder_ckpt', type=str, \
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    #split_list = ['train-clean-100', 'train-clean-360']
+    split_list = ['cmu_artic_ar_test', 'cmu_artic_ar']
 
     sub_folder_list = os.listdir(args.in_dir)
     sub_folder_list.sort()
@@ -58,24 +58,28 @@ if __name__ == "__main__":
     args.num_workers = args.num_workers if args.num_workers is not None else cpu_count()
     print("Number of workers: ", args.num_workers)
     ckpt_step = os.path.basename(args.spk_encoder_ckpt).split('.')[0].split('_')[-1]
-    spk_embed_out_dir = os.path.join(args.out_dir_root, "spk")
+    spk_embed_out_dir = os.path.join(args.out_dir_root, "spk/cmu_artic_ar_test")
     print("[INFO] spk_embed_out_dir: ", spk_embed_out_dir)
     os.makedirs(spk_embed_out_dir, exist_ok=True)
 
-    #for data_split in split_list:
-    #    sub_folder_list = os.listdir(args.in_dir, data_split) 
+    # for data_split in split_list:
+    #     sub_folder_list = os.listdir(os.path.join(args.in_dir, data_split)) 
+    #     # spk_embed_out_dir = os.path.join(spk_embed_out_dir, data_split)
+    #     # in_dir = os.path.join(args.in_dir, data_split)
+        
     for spk in sub_folder_list:
         print("Preprocessing {} ...".format(spk))
         in_dir = os.path.join(args.in_dir, spk)
         if not os.path.isdir(in_dir): 
             continue
-        #out_dir = os.path.join(args.out_dir, spk)
+        # out_dir = os.path.join(args.out_dir, spk)
+        
         preprocess(in_dir, spk_embed_out_dir, spk, args.spk_encoder_ckpt, args.num_workers)
-    '''
-    for data_split in split_list:
-        in_dir = os.path.join(args.in_dir, data_split)
-        preprocess(in_dir, spk_embed_out_dir, args.spk_encoder_ckpt, args.num_workers)
-    '''
+
+    # for data_split in split_list:
+    #     in_dir = os.path.join(args.in_dir, data_split)
+    #     preprocess(in_dir, spk_embed_out_dir, args.spk_encoder_ckpt, args.num_workers)
+ 
 
     print("DONE!")
     sys.exit(0)

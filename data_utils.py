@@ -44,19 +44,27 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
 
         lengths = []
         for audiopath in self.audiopaths:
-            lengths.append(os.path.getsize(audiopath[0]) // (2 * self.hop_length))
+            lengths.append(os.path.getsize(audiopath[0].replace("DUMMY", "dataset")) // (2 * self.hop_length))
         self.lengths = lengths
 
     def get_audio(self, filename):
-        audio, sampling_rate = load_wav_to_torch(filename)
+        audio, sampling_rate = load_wav_to_torch(filename.replace("DUMMY", "dataset"))
         if sampling_rate != self.sampling_rate:
             raise ValueError("{} SR doesn't match target {} SR".format(
                 sampling_rate, self.sampling_rate))
         audio_norm = audio / self.max_wav_value
         audio_norm = audio_norm.unsqueeze(0)
-        spec_filename = filename.replace(".wav", ".spec.pt")
+        spec_filename = filename.replace("DUMMY", "dataset").replace(".wav", ".spec.pt")
         if os.path.exists(spec_filename):
-            spec = torch.load(spec_filename)
+            try:
+                spec = torch.load(spec_filename)
+            except:
+                # raise FileExistsError(f"Error reading {spec_filename}")
+                spec = spectrogram_torch(audio_norm, self.filter_length,
+                self.sampling_rate, self.hop_length, self.win_length,
+                center=False)
+                spec = torch.squeeze(spec, 0)
+                torch.save(spec, spec_filename)
         else:
             spec = spectrogram_torch(audio_norm, self.filter_length,
                 self.sampling_rate, self.hop_length, self.win_length,
